@@ -1,83 +1,216 @@
 <!DOCTYPE html>
 <html lang="ca">
 <head>
-  <meta charset="UTF-8" />
-  <title>Anonimitzador local multi-format</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <link rel="stylesheet" href="style.css" />
-
-  <!-- UUID arreglat -->
-  <script src="https://unpkg.com/uuid@9.0.1/dist/umd/uuidv4.min.js"></script>
-  <script>window.uuidv4 = uuid.v4;</script>
-
-  <!-- PDF.js -->
-  <script src="https://unpkg.com/pdfjs-dist@4.4.168/build/pdf.min.js"></script>
-  <script>
-    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://unpkg.com/pdfjs-dist@4.4.168/build/pdf.worker.min.js';
-  </script>
-
-  <!-- Altres llibreries -->
-  <script src="https://unpkg.com/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
-  <script src="https://unpkg.com/jszip@3.10.1/dist/jszip.min.js"></script>
-  <script src="https://unpkg.com/mammoth@1.6.0/mammoth.browser.min.js"></script>
-  <script src="https://unpkg.com/papaparse@5.4.1/papaparse.min.js"></script>
-  
-  <!-- TF.js opcional -->
-  <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.20.0/dist/tf.min.js"></script>
+  <meta charset="UTF-8">
+  <title>Anonimitzador COMPLET iPad + Password + 48p</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    body{font-family:system-ui;margin:0;padding:1rem;background:#f5f5f5}
+    textarea, input{width:100%;font-size:16px;padding:.5rem}
+    button{padding:.5rem 1rem;margin:.25rem;font-size:16px;border-radius:6px}
+    #textView{padding:1rem;background:white;border-radius:8px;min-height:400px;overflow:auto;max-height:60vh}
+    .pii{padding:2px 4px;border-radius:4px;cursor:pointer;margin:0 1px;font-weight:bold}
+    .approved{background:#4caf50;color:white}
+    .pending{background:#ff9800;color:white}
+    .rejected{background:#9e9e9e;color:white;text-decoration:line-through}
+    .pii:active,.pii:hover{outline:2px solid #2196f3;transform:scale(1.05)}
+    #status{font-weight:bold;color:#2196f3;margin:1rem 0}
+    #progress{width:100%;height:10px;background:#ddd;border-radius:5px}
+    #progress-bar{height:100%;background:#4caf50;border-radius:5px;transition:width 0.3s}
+    h3{margin:.5rem 0;font-size:1.1rem}
+    .small{font-size:0.9rem;color:#666}
+  </style>
 </head>
 <body>
-  <header>
-    <h1>Anonimitzador local multi-format (beta)</h1>
-  </header>
+  <h1>🔒 Anonimitzador COMPLET (48p + Password OK)</h1>
+  
+  <div>
+    <input type="file" id="fileInput" accept=".pdf,.txt">
+    <textarea id="textInput" placeholder="O text manual..."></textarea>
+    <br>
+    <label><input type="checkbox" id="chkAllPages" checked> Tot el PDF (lent, ~2min/48p)</label>
+    <br>
+    <button onclick="processa()">🚀 Processa</button>
+    <button onclick="toggleMode()" id="modeBtn">👁️ Original</button>
+    <button onclick="exportar()" id="exportBtn" disabled>💾 Export MD + JSON</button>
+  </div>
 
-  <main id="app">
-    <section id="controls">
-      <div class="input-group">
-        <label>Carrega arxius:</label>
-        <input id="fileInput" type="file" multiple
-               accept=".pdf,.docx,.pptx,.txt,.csv,.jpg,.jpeg,.png" />
-      </div>
+  <div id="status">Llista...</div>
+  <div id="progress-container" style="display:none">
+    <div id="progress"><div id="progress-bar" style="width:0%"></div></div>
+    <small id="progress-text"></small>
+  </div>
+  
+  <div id="textView"></div>
+  <div id="log" class="small"></div>
 
-      <div class="input-group">
-        <label>O enganxa/entra text manual:</label>
-        <textarea id="rawTextInput" placeholder="Enganxa text aquí..."></textarea>
-      </div>
+  <script>
+    let textOriginal = '';
+    let entities = [];
+    let mode = 'original';
+    let progress = 0;
 
-      <div class="input-group">
-        <button id="btnProcess">1. Processa i detecta PII</button>
-        <button id="btnToggleView">Mode: Original</button>
-        <button id="btnExport" disabled>2. Exporta MD + JSON</button>
-      </div>
+    // Regex PII
+    const patterns = {
+      NIF: /\b\d{8}[A-Z]\b/g,
+      NIE: /\b[XYZ]\d{7}[A-Z]\b/g,
+      IBAN: /ES\d{2}\s?(\d{4}\s?){4}\d{2}/gi,
+      EMAIL: /[\w\.-]+@[\w\.-]+\.\w+/g,
+      PHONE: /(6|7|9)\d{8}/g,
+      PERSON: /(?:Nom|Titular|Client):\s*([A-ZÀ-Ÿ][a-zà-ÿ\s]+)/gi
+    };
 
-      <div class="input-group small">
-        <label>
-          <input type="checkbox" id="chkUseNER" checked />
-          Activar capa ML (NER) per suggeriments addicionals
-        </label>
-      </div>
+    async function processa() {
+      showProgress(0, 'Carregant...');
+      const file = document.getElementById('fileInput').files[0];
+      const inputText = document.getElementById('textInput').value;
+      
+      if (file && file.name.endsWith('.txt')) {
+        textOriginal = await file.text();
+        showProgress(100, 'Text carregat');
+      } else if (file && file.name.endsWith('.pdf')) {
+        await processaPDF(file);
+      } else {
+        textOriginal = inputText;
+        showProgress(100, 'Text manual');
+      }
 
-      <div class="status-line" id="statusLine"></div>
-    </section>
+      if (!textOriginal.trim()) {
+        document.getElementById('status').innerHTML = '❌ Cap text';
+        return;
+      }
 
-    <section id="layout">
-      <section id="textPanel">
-        <h2>Document</h2>
-        <div id="textView"></div>
-      </section>
+      showProgress(50, '🔍 Detectant PII...');
+      entities = detectaPII(textOriginal);
+      
+      render();
+      showProgress(100, `✅ ${entities.length} PII. Tap per aprovar.`);
+      document.getElementById('exportBtn').disabled = entities.some(e => e.status === 'pending');
+    }
 
-      <section id="entitiesPanel">
-        <h2>Entitats PII</h2>
-        <ul id="entitiesList"></ul>
-      </section>
-    </section>
-  </main>
+    async function processaPDF(file) {
+      const arrayBuffer = await file.arrayBuffer();
+      showProgress(10, 'Prova sense password...');
+      
+      try {
+        // Sense password
+        const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+        textOriginal = await extreuPDF(pdf, document.getElementById('chkAllPages').checked);
+      } catch (e) {
+        if (e.name === 'PasswordException') {
+          const password = prompt('🔐 PDF protegit. Password:');
+          if (!password) throw new Error('Password cancel·lat');
+          
+          showProgress(20, 'Desbloquejant...');
+          const pdf = await pdfjsLib.getDocument({ 
+            data: arrayBuffer, 
+            password 
+          }).promise;
+          textOriginal = await extreuPDF(pdf, document.getElementById('chkAllPages').checked);
+        } else {
+          throw e;
+        }
+      }
+    }
 
-  <footer>
-    <small>Tot el processament es fa localment al teu navegador. No s'envien dades a cap servidor.</small>
-  </footer>
+    async function extreuPDF(pdf, allPages) {
+      const numPages = allPages ? pdf.numPages : 3; // Limit 3 si no allPages
+      let fullText = '';
+      
+      for (let i = 1; i <= numPages; i++) {
+        showProgress(20 + (i / numPages) * 30, `Pàgina ${i}/${numPages}`);
+        const page = await pdf.getPage(i);
+        const content = await page.getTextContent({ normalizeWhitespace: true });
+        fullText += content.items.map(it => it.str).join(' ') + '\n';
+      }
+      
+      return fullText;
+    }
 
-  <script src="patterns.js"></script>
-  <script src="app.js"></script>
+    function detectaPII(text) {
+      const list = [];
+      Object.entries(patterns).forEach(([type, regex]) => {
+        regex.lastIndex = 0;
+        let match;
+        while ((match = regex.exec(text)) !== null) {
+          list.push({
+            id: Math.random().toString(36).slice(2),
+            type,
+            start: match.index,
+            end: match.index + match[0].length,
+            text: match[0],
+            status: type === 'PERSON' ? 'pending' : 'approved'
+          });
+        }
+      });
+      return list;
+    }
+
+    function render() {
+      let html = '';
+      let i = 0;
+      entities.sort((a,b) => a.start - b.start);
+      
+      entities.forEach(e => {
+        html += textOriginal.slice(i, e.start);
+        const cls = e.status;
+        const shown = mode === 'original' ? e.text : `****${e.type}_${e.id.slice(0,4)}****`;
+        html += `<span class="pii ${cls}" onclick="toggle(${e.id})">${shown}</span>`;
+        i = e.end;
+      });
+      html += textOriginal.slice(i);
+      
+      document.getElementById('textView').innerHTML = html;
+      document.getElementById('log').innerHTML = 
+        `${entities.filter(e=>e.status==='approved').length} aprovats / ${entities.filter(e=>e.status==='pending').length} pendents`;
+    }
+
+    function toggle(id) {
+      const ent = entities.find(e => e.id === id);
+      ent.status = ent.status === 'approved' ? 'rejected' : 'approved';
+      render();
+      document.getElementById('exportBtn').disabled = entities.some(e => e.status === 'pending');
+    }
+
+    function toggleMode() {
+      mode = mode === 'original' ? 'tokens' : 'original';
+      document.getElementById('modeBtn').textContent = mode === 'original' ? '👁️ Original' : '🔒 Tokens';
+      render();
+    }
+
+    function exportar() {
+      if (entities.some(e => e.status === 'pending')) return alert('Revisa pendents!');
+      
+      let md = textOriginal;
+      entities.filter(e => e.status === 'approved').forEach(e => {
+        md = md.replace(e.text, `****${e.type}_${e.id.slice(0,4)}****`);
+      });
+      
+      // MD
+      const blobMD = new Blob([md], {type: 'text/markdown'});
+      download(blobMD, 'anonim.md');
+      
+      // JSON
+      const json = {entities: entities.filter(e => e.status === 'approved')};
+      const blobJSON = new Blob([JSON.stringify(json, null, 2)], {type: 'application/json'});
+      download(blobJSON, 'mapping.json');
+    }
+
+    function download(blob, name) {
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = name;
+      a.click();
+    }
+
+    function showProgress(pct, msg) {
+      document.getElementById('progress-bar').style.width = pct + '%';
+      document.getElementById('progress-text').textContent = msg;
+      document.getElementById('progress-container').style.display = 'block';
+      document.getElementById('status').innerHTML = msg;
+    }
+  </script>
+
+  <script src="https://unpkg.com/pdfjs-dist@4.4.168/build/pdf.min.js"></script>
 </body>
 </html>
-
