@@ -55,51 +55,62 @@ function setStatus(msg) {
 --------------------------- */
 
 async function onProcessClick() {
-  setStatus("Processant documents...");
+  setStatus("📁 Carregant fitxers...");
+  btnProcess.disabled = true;
   btnExport.disabled = true;
   documents = [];
   entities = [];
 
   const files = Array.from(fileInput.files || []);
-  const promisesDoc = files.map((f) => loadFile(f));
-  const loadedDocs = (await Promise.all(promisesDoc)).filter(Boolean);
-  documents.push(...loadedDocs);
-
-  // Text manual
   const raw = rawTextInput.value.trim();
+
+  // Progrés: carregant fitxers
+  for (let i = 0; i < files.length; i++) {
+    const file = files[i];
+    setStatus(`📄 Carregant ${file.name} (${i + 1}/${files.length})...`);
+    const doc = await loadFile(file);
+    if (doc) documents.push(doc);
+  }
+
   if (raw.length > 0) {
+    setStatus("✏️ Processant text manual...");
     documents.push(buildRawTextDocument(raw));
   }
 
   if (documents.length === 0) {
-    setStatus("No hi ha documents ni text per processar.");
+    setStatus("❌ No hi ha documents.");
+    btnProcess.disabled = false;
     return;
   }
 
-  // Detecció PII
-  setStatus("Detectant PII (regex/heurístic)...");
+  setStatus("🔍 Detectant PII regex...");
   const regexEntities = detectByRegex(documents);
+
+  setStatus("🧠 Detectant heurístiques...");
   const heuristicEntities = detectByHeuristic(documents);
 
   entities = [...regexEntities, ...heuristicEntities];
 
-  // Opcional: capa NER
   if (useNER && nerWorker) {
-    setStatus("Executant capa ML (NER)...");
-    const nerEntities = await runNER(documents);
-    entities.push(...nerEntities);
+    setStatus("🤖 Executant ML NER...");
+    try {
+      const nerEntities = await runNER(documents);
+      entities.push(...nerEntities);
+    } catch (e) {
+      setStatus("⚠️ NER saltat (no disponible)");
+    }
   }
 
-  // Elimina solapaments i unifica tokens
   normalizeEntities();
-
-  // Render
   renderAll();
 
-  // Doble pass de comprovació (encara no aplicats tokens, però es pot fer després)
+  const pendingCount = entities.filter((e) => e.status === "pending").length;
   setStatus(
-    "Detecció completada. Revisa les entitats (pendents en taronja) abans d'exportar."
+    `✅ Detecció completa (${entities.length} entitats). ${pendingCount} pendents.`
   );
+
+  btnProcess.disabled = false;
+  btnExport.disabled = pendingCount > 0;
 }
 
 function buildRawTextDocument(text) {
