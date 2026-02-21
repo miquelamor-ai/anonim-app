@@ -1,6 +1,6 @@
 // app.js
 
-const { v4: uuidv4 } = uuid; // de uuid UMD
+const uuidv4 = window.uuidv4; 
 
 // Estat global bàsic
 let documents = []; // DocumentModel[]
