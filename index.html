@@ -1,1 +1,79 @@
+<!DOCTYPE html>
+<html lang="ca">
+<head>
+  <meta charset="UTF-8" />
+  <title>Anonimitzador local multi-format</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="stylesheet" href="style.css" />
+
+  <!-- Llibreries des de CDN -->
+  <script src="https://unpkg.com/pdfjs-dist@4.4.168/build/pdf.min.js"></script>
+  <script>
+    pdfjsLib.GlobalWorkerOptions.workerSrc =
+      "https://unpkg.com/pdfjs-dist@4.4.168/build/pdf.worker.min.js";
+  </script>
+
+  <script src="https://unpkg.com/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
+  <script src="https://unpkg.com/jszip@3.10.1/dist/jszip.min.js"></script>
+  <script src="https://unpkg.com/mammoth@1.6.0/mammoth.browser.min.js"></script>
+  <script src="https://unpkg.com/papaparse@5.4.1/papaparse.min.js"></script>
+  <script src="https://unpkg.com/uuid@10.0.0/dist/index.umd.js"></script>
+  <!-- tf.js per NER local (el model es carrega al worker) -->
+  <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.20.0/dist/tf.min.js"></script>
+</head>
+<body>
+  <header>
+    <h1>Anonimitzador local multi-format (beta)</h1>
+  </header>
+
+  <main id="app">
+    <section id="controls">
+      <div class="input-group">
+        <label>Carrega arxius:</label>
+        <input id="fileInput" type="file" multiple
+               accept=".pdf,.docx,.pptx,.txt,.csv,.jpg,.jpeg,.png" />
+      </div>
+
+      <div class="input-group">
+        <label>O enganxa/entra text manual:</label>
+        <textarea id="rawTextInput" placeholder="Enganxa text aquí..."></textarea>
+      </div>
+
+      <div class="input-group">
+        <button id="btnProcess">1. Processa i detecta PII</button>
+        <button id="btnToggleView">Mode: Original</button>
+        <button id="btnExport" disabled>2. Exporta MD + JSON</button>
+      </div>
+
+      <div class="input-group small">
+        <label>
+          <input type="checkbox" id="chkUseNER" checked />
+          Activar capa ML (NER) per suggeriments addicionals
+        </label>
+      </div>
+
+      <div class="status-line" id="statusLine"></div>
+    </section>
+
+    <section id="layout">
+      <section id="textPanel">
+        <h2>Document</h2>
+        <div id="textView"></div>
+      </section>
+
+      <section id="entitiesPanel">
+        <h2>Entitats PII</h2>
+        <ul id="entitiesList"></ul>
+      </section>
+    </section>
+  </main>
+
+  <footer>
+    <small>Tot el processament es fa localment al teu navegador. No s'envien dades a cap servidor.</small>
+  </footer>
+
+  <script src="patterns.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
 
