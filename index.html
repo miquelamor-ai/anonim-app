@@ -2,236 +2,209 @@
 <html lang="ca">
 <head>
   <meta charset="UTF-8">
-  <title>🔐 Anonimitzador PDF Password + 48p</title>
+  <title>Anonimitzador Final - Simple i Ràpid</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <style>
-    *{box-sizing:border-box;font-family:system-ui,sans-serif}
-    body{margin:0;padding:1rem;background:#f0f4f8}
-    input,textarea{width:100%;padding:.75rem;font-size:16px;border:1px solid #ddd;border-radius:8px;margin:.5rem 0}
-    button{padding:.75rem 1.5rem;margin:.25rem;font-size:16px;border:none;border-radius:8px;cursor:pointer;font-weight:600}
-    button:disabled{opacity:.5;cursor:not-allowed}
-    #primary{background:#4f46e5;color:white}
-    #secondary{background:#6b7280;color:white}
-    #textView{padding:1.5rem;background:white;border-radius:12px;min-height:400px;max-height:50vh;overflow:auto;box-shadow:0 4px 12px rgba(0,0,0,0.1)}
-    .pii{padding:4px 8px;border-radius:6px;cursor:pointer;margin:1px;font-weight:bold;display:inline-block}
-    .approved{background:#10b981;color:white}
+    *{box-sizing:border-box;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+    body{margin:0;padding:1.5rem;background:#f8fafc;color:#1f2937}
+    textarea{width:100%;height:200px;padding:1rem;font-size:16px;border:2px solid #e2e8f0;border-radius:12px;margin:1rem 0;box-shadow:0 4px 12px rgba(0,0,0,0.1)}
+    button{padding:1rem 1.5rem;margin:.5rem;font-size:16px;border:none;border-radius:12px;cursor:pointer;font-weight:600;box-shadow:0 4px 16px rgba(0,0,0,0.15);transition:all .2s}
+    #process{background:linear-gradient(135deg,#3b82f6,#1d4ed8);color:white}
+    #toggle{background:linear-gradient(135deg,#10b981,#059669);color:white}
+    #export{background:linear-gradient(135deg,#8b5cf6,#7c3aed);color:white}
+    #export:disabled{opacity:.6;cursor:not-allowed}
+    #textView{padding:1.5rem;background:white;border-radius:12px;min-height:400px;box-shadow:0 8px 32px rgba(0,0,0,0.12);line-height:1.7;font-size:16px}
+    .pii{padding:4px 8px;border-radius:8px;cursor:pointer;margin:2px 1px;font-weight:700;display:inline-block;box-shadow:0 2px 8px rgba(0,0,0,0.2);transition:all .2s}
+    .approved{background:#10b981;color:white;transform:scale(1)}
     .pending{background:#f59e0b;color:white}
-    .rejected{background:#6b7280;color:white;text-decoration:line-through}
-    .pii:active,.pii:hover{outline:3px solid #3b82f6;transform:scale(1.02)}
-    #status{padding:1rem;background:#eff6ff;border-radius:8px;margin:1rem 0;font-weight:500}
-    #progress{width:100%;height:8px;background:#e5e7eb;border-radius:4px;overflow:hidden;margin:1rem 0}
-    #progress-bar{height:100%;background:linear-gradient(90deg,#10b981,#059669);transition:width .3s}
-    .small{font-size:.875rem;color:#6b7280}
-    h1,h2,h3{margin:.5rem 0;color:#1f2937}
-    h1{font-size:1.5rem}
+    .rejected{background:#6b7280;color:#fff;text-decoration:line-through;opacity:.7}
+    .pii:hover,.pii:active{outline:3px solid #3b82f6;transform:scale(1.05)}
+    #status{padding:1.5rem;background:linear-gradient(135deg,#dbeafe,#bfdbfe);border-radius:12px;margin:1.5rem 0;font-weight:600;color:#1e40af;border-left:5px solid #3b82f6;box-shadow:0 4px 20px rgba(59,130,246,0.2)}
+    h1{font-size:2rem;text-align:center;background:linear-gradient(135deg,#1e293b,#334155);color:white;padding:1.5rem;margin:0;border-radius:20px;box-shadow:0 20px 40px rgba(0,0,0,0.2)}
+    .instructions{background:#f1f5f9;padding:1.25rem;border-radius:12px;margin:1.5rem 0;border-left:6px solid #10b981;box-shadow:0 4px 20px rgba(16,185,129,0.1)}
+    .small{font-size:.9rem;color:#64748b}
   </style>
 </head>
 <body>
-  <h1>🔐 Anonimitzador COMPLET Password + Multi-pàgina</h1>
+  <h1>🔒 Anonimitzador Final</h1>
   
-  <div>
-    <input type="file" id="fileInput" accept=".pdf,.txt">
-    <textarea id="textInput" placeholder="O copia text manual... (Nom: Pere DNI: 12345678A...)"></textarea>
-    
-    <div style="display:flex;gap:.5rem;flex-wrap:wrap">
-      <button id="btnProcess" onclick="processa()">🚀 Processa</button>
-      <button id="modeBtn" onclick="toggleMode()">👁️ Original</button>
-      <button id="exportBtn" onclick="exportar()" disabled>💾 MD + JSON</button>
-    </div>
-    
-    <label style="display:flex;align-items:center;gap:.5rem">
-      <input type="checkbox" id="chkAllPages"> Tot el PDF (48p ~2min)
-    </label>
+  <div class="instructions">
+    <strong>🎯 Ús simple:</strong><br>
+    1. Obre PDF (Adobe/Files) → Password OK → Ctrl+A → Ctrl+C.<br>
+    2. Enganxa aquí → <strong>Processa</strong>.<br>
+    3. <strong>Tap groc/taronja</strong> per aprovar.<br>
+    4. <strong>Export MD</strong> → comparteix segur.
   </div>
 
-  <div id="status">Selecciona PDF o text...</div>
-  <div id="progress" style="display:none">
-    <div id="progress-bar"></div>
-    <div id="progress-text" class="small"></div>
-  </div>
+  <textarea id="textInput" placeholder="Copia tot del PDF aquí... (Nom: Pere DNI: 12345678A IBAN: ES9123456789012345678901...)&#10;&#10;Exemple:&#10;Titular: Maria López Pérez&#10;DNI: 87654321Z&#10;Compte: ES91 2345 6789 0123 4567 8901"></textarea>
   
+  <div style="text-align:center">
+    <button id="process" onclick="processa()">🚀 Processa PII</button>
+    <button id="toggle" onclick="toggleMode()">👁️ Veure Tokens</button>
+    <button id="export" onclick="exportar()" disabled>💾 Export MD + JSON</button>
+  </div>
+
+  <div id="status">Enganxa text del PDF i clica Processa...</div>
   <div id="textView"></div>
   <div id="log" class="small"></div>
 
   <script>
     let textOriginal = '';
     let entities = [];
-    let mode = 'original';
-    
+    let viewMode = 'original'; // 'original' o 'tokens'
+
+    // Regex principals (ràpids i precisos)
     const patterns = {
       NIF: /\b\d{8}[A-Z]\b/gi,
       NIE: /\b[XYZ]\d{7}[A-Z]\b/gi,
       IBAN: /\bES\d{2}\s?(\d{4}\s?){4}\d{2}\b/gi,
-      EMAIL: /[\w\.-]+@[\w\.-]+\.\w+/gi,
-      PHONE: /\b(6|7|9)\d{8}\b/g,
-      PERSON: /(?:[Nn]om|[Tt]itular|[Cc]lient):\s*([A-ZÀ-Ÿ][\w\sà-ÿ]+)/gi
+      EMAIL: /[\w\.-]+@[\w\.-]+\.\w{2,}/gi,
+      PHONE: /\b[6-9]\d{8}\b/gi,
+      PERSON: /(?:[Nn]om|[Tt]itular|[Cc]liente?|[Aa]lumna?):\s*([A-ZÀ-Ÿ][a-zà-ÿ\s]+[A-ZÀ-Ÿ][a-zà-ÿ\s]*)/gi
     };
 
-    async function processa() {
-      showProgress(0, 'Iniciant...');
-      const file = document.getElementById('fileInput').files[0];
-      const inputText = document.getElementById('textInput').value.trim();
+    function processa() {
+      textOriginal = document.getElementById('textInput').value.trim();
       
-      if (!file && !inputText) {
-        document.getElementById('status').innerHTML = '❌ Selecciona PDF o text';
+      if (!textOriginal) {
+        document.getElementById('status').innerHTML = '❌ Enganxa text del PDF';
         return;
       }
 
-      try {
-        if (file && file.name.toLowerCase().endsWith('.txt')) {
-          showProgress(20, 'Llegint TXT...');
-          textOriginal = await file.text();
-        } else if (file && file.name.toLowerCase().endsWith('.pdf')) {
-          await processaPDFCompleto(file);
-        } else {
-          textOriginal = inputText;
-          showProgress(100, 'Text manual carregat');
-        }
+      document.getElementById('status').innerHTML = '🔍 Detectant PII automàtic...';
 
-        if (!textOriginal.trim()) throw new Error('Text buit');
-
-        showProgress(70, '🔍 Detectant PII...');
-        entities = detectaPII(textOriginal);
-        
-        render();
-        const pendents = entities.filter(e => e.status === 'pending').length;
-        showProgress(100, `✅ ${entities.length} PII (${pendents} pendents). Tap per aprovar!`);
-        document.getElementById('exportBtn').disabled = pendents > 0;
-        
-      } catch (error) {
-        document.getElementById('status').innerHTML = `❌ Error: ${error.message}`;
-        console.error(error);
-      }
-    }
-
-    async function processaPDFCompleto(file) {
-      showProgress(5, 'Carregant PDF...');
-      const arrayBuffer = await file.arrayBuffer();
+      // Detecta totes les entitats
+      entities = [];
+      let tokenId = 1;
       
-      // ✅ SEMPRE pregunta password per PDFs (evita error)
-      const password = prompt('🔐 PDF? Password (deixa buit si no n\'té):') || '';
-      
-      showProgress(15, password ? '🔓 Desbloquejant...' : '📖 Llegint sense password...');
-      
-      const loadingTask = pdfjsLib.getDocument({ 
-        data: arrayBuffer,
-        password: password
-      });
-      
-      const pdf = await loadingTask.promise;
-      const maxPages = document.getElementById('chkAllPages').checked ? pdf.numPages : 5;
-      
-      textOriginal = '';
-      for (let i = 1; i <= maxPages; i++) {
-        showProgress(15 + (i / maxPages) * 50, `📄 Pàgina ${i}/${maxPages}`);
-        const page = await pdf.getPage(i);
-        const content = await page.getTextContent({ normalizeWhitespace: true });
-        textOriginal += content.items.map(it => it.str).join(' ') + '\n\n';
-      }
-      
-      showProgress(65, `✅ ${maxPages} pàgines extretes`);
-    }
-
-    function detectaPII(text) {
-      const list = [];
       Object.entries(patterns).forEach(([type, regex]) => {
         regex.lastIndex = 0;
         let match;
-        while ((match = regex.exec(text)) !== null) {
-          list.push({
-            id: 'e' + Math.random().toString(36).slice(2, 8),
+        while ((match = regex.exec(textOriginal)) !== null) {
+          entities.push({
+            id: tokenId++,
             type: type,
             start: match.index,
             end: match.index + match[0].length,
-            text: match[0],
-            status: type === 'PERSON' ? 'pending' : 'approved'
+            original: match[0],
+            status: type === 'PERSON' ? 'pending' : 'approved' // PERSONs per revisar
           });
         }
       });
-      return list;
+
+      render();
+      const pendents = entities.filter(e => e.status === 'pending').length;
+      document.getElementById('status').innerHTML = 
+        `✅ Detectats ${entities.length} PII (${pendents} per revisar). Tap per aprovar!`;
+      document.getElementById('exportBtn').disabled = pendents > 0;
     }
 
     function render() {
       let html = '';
-      let i = 0;
+      let pos = 0;
+      
+      // Ordena per posició
       const sorted = [...entities].sort((a,b) => a.start - b.start);
       
-      sorted.forEach(e => {
-        html += escapeHtml(textOriginal.slice(i, e.start));
-        const cls = e.status;
-        const shown = mode === 'original' ? e.text : `****${e.type}_${e.id.slice(2)}****`;
-        html += `<span class="pii ${cls}" data-id="${e.id}" onclick="toggle('${e.id}')">${shown}</span>`;
-        i = e.end;
+      sorted.forEach(ent => {
+        // Text abans
+        html += textOriginal.slice(pos, ent.start);
+        
+        // Span PII
+        const shown = viewMode === 'original' ? ent.original : `****${ent.type}_${String(ent.id).padStart(4,'0')}****`;
+        const statusClass = ent.status;
+        html += `<span class="pii ${statusClass}" data-id="${ent.id}" onclick="toggle(${ent.id})">${shown}</span>`;
+        
+        pos = ent.end;
       });
-      html += escapeHtml(textOriginal.slice(i));
+      
+      // Text final
+      html += textOriginal.slice(pos);
       
       document.getElementById('textView').innerHTML = html;
-      const aprovats = entities.filter(e=>e.status==='approved').length;
-      const pendents = entities.filter(e=>e.status==='pending').length;
-      document.getElementById('log').innerHTML = `${aprovats} aprovats • ${pendents} pendents`;
+      
+      // Log
+      const stats = entities.reduce((acc, e) => {
+        acc[e.status] = (acc[e.status] || 0) + 1;
+        return acc;
+      }, {});
+      document.getElementById('log').innerHTML = 
+        `Aprovats: ${stats.approved || 0} | Pendents: ${stats.pending || 0} | Rebutjats: ${stats.rejected || 0}`;
     }
 
     function toggle(id) {
-      const ent = entities.find(e => e.id === id);
-      ent.status = ent.status === 'approved' ? 'rejected' : 'approved';
+      const ent = entities.find(e => e.id == id);
+      if (!ent) return;
+      
+      // Toggle status
+      if (ent.status === 'approved') ent.status = 'rejected';
+      else if (ent.status === 'rejected') ent.status = 'pending';
+      else ent.status = 'approved'; // pending → approved
+      
       render();
-      document.getElementById('exportBtn').disabled = entities.some(e => e.status === 'pending');
+      
+      // Actualitza export
+      const pendents = entities.filter(e => e.status === 'pending').length;
+      document.getElementById('exportBtn').disabled = pendents > 0;
+      
+      // Status
+      const total = entities.length;
+      document.getElementById('status').innerHTML = 
+        `✅ ${total} PII. ${pendents} pendents → <strong>${total - pendents} llestos per exportar</strong>`;
     }
 
     function toggleMode() {
-      mode = mode === 'original' ? 'tokens' : 'original';
-      document.getElementById('modeBtn').textContent = mode === 'original' ? '👁️ Original' : '🔒 Tokens';
+      viewMode = viewMode === 'original' ? 'tokens' : 'original';
+      document.getElementById('toggle').innerHTML = viewMode === 'original' ? '👁️ Original' : '🔒 Tokens';
       render();
     }
 
     function exportar() {
-      if (entities.some(e => e.status === 'pending')) {
-        alert('⚠️ Revisa els pendents (taronja)!');
+      const pendents = entities.filter(e => e.status === 'pending');
+      if (pendents.length > 0) {
+        alert(`⚠️ ${pendents.length} PII pendents. Revisa'ls (taronja)!`);
         return;
       }
-      
+
+      // Construeix MD amb tokens
       let md = textOriginal;
-      entities.filter(e => e.status === 'approved').forEach(e => {
-        const token = `****${e.type}_${e.id.slice(2)}****`;
-        md = md.slice(0, e.start) + token + md.slice(e.end);
+      const approved = entities.filter(e => e.status === 'approved');
+      approved.forEach(ent => {
+        const token = `****${ent.type}_${String(ent.id).padStart(4,'0')}****`;
+        md = md.slice(0, ent.start) + token + md.slice(ent.end);
       });
-      
-      // MD
-      download(new Blob([md], {type: 'text/markdown'}), 'anonim.md');
-      
-      // JSON
+
+      // 1. Export MD
+      const blobMD = new Blob([md], {type: 'text/markdown;charset=utf-8'});
+      downloadFile(blobMD, 'anonim-final.md');
+
+      // 2. Export JSON mapping
       const mapping = {
-        totalPII: entities.filter(e => e.status === 'approved').length,
-        entities: entities.filter(e => e.status === 'approved')
+        generat: new Date().toISOString(),
+        totalPII: approved.length,
+        mapping: approved.map(e => ({
+          token: `****${e.type}_${String(e.id).padStart(4,'0')}****`,
+          original: e.original,
+          tipus: e.type
+        }))
       };
-      download(new Blob([JSON.stringify(mapping, null, 2)], {type: 'application/json'}), 'mapping.json');
+      const blobJSON = new Blob([JSON.stringify(mapping, null, 2)], {type: 'application/json;charset=utf-8'});
+      downloadFile(blobJSON, 'mapping-pii.json');
+
+      document.getElementById('status').innerHTML = '✅ Export completat! MD + JSON descarregats.';
     }
 
-    function escapeHtml(text) {
-      const map = {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','\'':'&#039;'};
-      return text.replace(/[&<>"']/g, m => map[m]);
-    }
-
-    function showProgress(pct, msg) {
-      document.getElementById('progress-bar').style.width = pct + '%';
-      document.getElementById('progress-text').textContent = msg;
-      document.getElementById('status').innerHTML = msg;
-      document.getElementById('progress').style.display = 'block';
-    }
-
-    function download(blob, filename) {
+    function downloadFile(blob, filename) {
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
+      a.style.display = 'none';
       a.href = url;
       a.download = filename;
       document.body.appendChild(a);
       a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
+      window.URL.revokeObjectURL(url);
+      setTimeout(() => document.body.removeChild(a), 100);
     }
   </script>
-
-  <!-- PDF.js -->
-  <script src="https://unpkg.com/pdfjs-dist@4.4.168/build/pdf.min.js"></script>
 </body>
 </html>
