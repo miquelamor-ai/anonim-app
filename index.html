@@ -17,7 +17,10 @@
   <script src="https://unpkg.com/jszip@3.10.1/dist/jszip.min.js"></script>
   <script src="https://unpkg.com/mammoth@1.6.0/mammoth.browser.min.js"></script>
   <script src="https://unpkg.com/papaparse@5.4.1/papaparse.min.js"></script>
-  <script src="https://unpkg.com/uuid@10.0.0/dist/index.umd.js"></script>
+  <script src="https://unpkg.com/uuid@9.0.1/dist/umd/uuidv4.min.js"></script>
+<script>
+  const { v4: uuidv4 } = uuid;
+</script>
   <!-- tf.js per NER local (el model es carrega al worker) -->
   <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.20.0/dist/tf.min.js"></script>
 </head>
